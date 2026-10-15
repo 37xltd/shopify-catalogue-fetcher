@@ -1,0 +1,22 @@
+name: nightly-shopify-catalogue
+on:
+  schedule:
+    - cron: '20 0 * * *'   # main pass, just after the Worker's UTC day rolls over
+    - cron: '20 6 * * *'   # picks up anything left / retries
+  workflow_dispatch: {}
+concurrency: { group: shopify-catalogue, cancel-in-progress: false }
+permissions: { contents: read }
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node fetch.mjs
+        env:
+          WORKER_URL: ${{ vars.WORKER_URL }}
+          INGEST_KEY: ${{ secrets.INGEST_KEY }}
+          MAX_MINUTES: '330'
+          GAP_MS: '1000'
